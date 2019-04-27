@@ -6,8 +6,8 @@ function BuildBoard(props) {
     let rowsArray = [];
     let squareClass = "";
 
-    for (let i = 0; i < 20; i++) {
-        for (let j = 0; j < 30; j++) {
+    for (let i = 0; i < 15; i++) {
+        for (let j = 0; j < 15; j++) {
             let squareId = i + "_" + j;
             squareClass = props.board[i][j] ? "box red" : "box blue";
 
@@ -38,18 +38,20 @@ class App extends React.Component {
         this.state = {
             intervalId: "",
             currentDirection: "",
-            board: Array(20)
+            gameStarted: false,
+            board: Array(15)
                 .fill()
-                .map(() => Array(30).fill(false)),
+                .map(() => Array(15).fill(false)),
             speed: 100,
-            columnPos: 10,
-            rowPos: 15,
-            snake: [[0, 0], [1, 1]],
-            size: 1
+            columnPos: 7,
+            rowPos: 7,
+            snake: [[7, 7], [8, 8]],
+            size: 100
         };
     }
 
     componentDidMount() {
+        // toggle starting position
         this.toggle(this.state.columnPos, this.state.rowPos);
 
         document.addEventListener("keydown", this.handleKeyPress);
@@ -64,7 +66,7 @@ class App extends React.Component {
                             columnPos: previousState.columnPos - 1
                         };
                     },
-                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                    () => this.drawSnake()
                 );
                 break;
             case 39: //right
@@ -74,7 +76,7 @@ class App extends React.Component {
                             rowPos: previousState.rowPos + 1
                         };
                     },
-                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                    () => this.drawSnake()
                 );
                 break;
             case 40: //down
@@ -84,7 +86,7 @@ class App extends React.Component {
                             columnPos: previousState.columnPos + 1
                         };
                     },
-                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                    () => this.drawSnake()
                 );
                 break;
             case 37: //left
@@ -94,7 +96,7 @@ class App extends React.Component {
                             rowPos: previousState.rowPos - 1
                         };
                     },
-                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                    () => this.drawSnake()
                 );
                 break;
             default:
@@ -103,69 +105,56 @@ class App extends React.Component {
     }
 
     handleKeyPress(e) {
-        e.preventDefault();
-        this.setState({
-            currentDirection: e.keyCode
-        });
-        // switch (e.keyCode) {
-        //     case 38: //up
-        //         console.log("up");
+        if (e.keyCode === 37 || 38 || 39 || 40) {
+            e.preventDefault();
+        }
 
-        //         e.preventDefault();
+        this.setState(
+            {
+                currentDirection: e.keyCode
+            },
+            () => {
+                if (this.state.gameStarted === false) {
+                    this.startGame();
 
-        //         this.setState(
-        //             previousState => {
-        //                 return {
-        //                     columnPos: previousState.columnPos - 1,
-        //                     currentDirection: e.keycode
-        //                 };
-        //             },
-        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
-        //         );
-        //         break;
-        //     case 39: //right
-        //         console.log("right");
-        //         e.preventDefault();
-        //         this.setState(
-        //             previousState => {
-        //                 return {
-        //                     rowPos: previousState.rowPos + 1
-        //                 };
-        //             },
-        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
-        //         );
-        //         break;
-        //     case 40: //down
-        //         console.log("down");
-        //         e.preventDefault();
-        //         this.setState(
-        //             previousState => {
-        //                 return {
-        //                     columnPos: previousState.columnPos + 1
-        //                 };
-        //             },
-        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
-        //         );
-        //         break;
-        //     case 37: //left
-        //         console.log("left");
-        //         e.preventDefault();
-        //         this.setState(
-        //             previousState => {
-        //                 return {
-        //                     rowPos: previousState.rowPos - 1
-        //                 };
-        //             },
-        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
-        //         );
-        //         break;
-        //     default:
-        //         break;
-        // }
+                    this.setState({
+                        gameStarted: true
+                    });
+                }
+            }
+        );
+    }
+
+    test(copy) {
+        for (let i = 0; i < copy.length; i++) {
+            if (copy[i] === [[7, 7]]) {
+                alert("lost");
+            }
+        }
     }
 
     drawSnake() {
-        this.state.snake.forEach(x => this.toggle(x[0], x[1]));
+        let copy = this.arrayClone(this.state.snake);
+
+        if (this.state.snake.length === this.state.size) {
+            this.toggle(copy[0][0], copy[0][1], false);
+            copy.shift();
+        }
+
+        for (let i = 0; i < copy.length; i++) {
+            if (
+                copy[i][0] === this.state.columnPos &&
+                copy[i][1] === this.state.rowPos
+            ) {
+                return alert("lost");
+            }
+        }
+
+        copy.push([this.state.columnPos, this.state.rowPos]);
+        copy.forEach(x => this.toggle(x[0], x[1]));
+        this.setState({
+            snake: copy
+        });
     }
 
     toggle(column, row, status = true) {
@@ -178,13 +167,16 @@ class App extends React.Component {
     }
 
     startGame() {
-        var intervalId = setInterval(() => this.move(), 400);
+        var intervalId = setInterval(() => this.move(), 1000);
         // store intervalId in the state so it can be accessed later:
         this.setState({ intervalId: intervalId });
     }
 
     arrayClone(array) {
-        return JSON.parse(JSON.stringify(array));
+        let clone = [...array];
+        return clone;
+
+        // return JSON.parse(JSON.stringify(array));
     }
 
     render() {
