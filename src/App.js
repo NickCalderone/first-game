@@ -38,6 +38,7 @@ class App extends React.Component {
         this.state = {
             intervalId: "",
             currentDirection: "",
+            foodPos: [],
             gameStarted: false,
             board: Array(15)
                 .fill()
@@ -50,9 +51,26 @@ class App extends React.Component {
         };
     }
 
+    getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
+
+    dropFood() {
+        let col = this.getRandomInt(15);
+        let row = this.getRandomInt(15);
+
+        this.setState(
+            {
+                foodPos: [col, row]
+            },
+            this.toggle(col, row)
+        );
+    }
+
     componentDidMount() {
         // toggle starting position
         this.toggle(this.state.columnPos, this.state.rowPos);
+        this.dropFood();
         document.addEventListener("keydown", this.handleKeyPress);
     }
 
@@ -127,15 +145,28 @@ class App extends React.Component {
     drawSnake() {
         let copy = this.arrayClone(this.state.snake);
 
-        this.snakeTail(copy);
-
         this.loseCheck(copy);
-
         this.snakeHead(copy);
+        this.foodCheck(copy);
+        this.snakeTail(copy);
 
         this.setState({
             snake: copy
         });
+    }
+
+    foodCheck(copy) {
+        if (
+            copy[copy.length - 1][0] === this.state.foodPos[0] &&
+            copy[copy.length - 1][1] === this.state.foodPos[1]
+        ) {
+            this.dropFood();
+            this.setState(previousState => {
+                return {
+                    size: previousState.size + 1
+                };
+            });
+        }
     }
 
     loseCheck(copy) {
@@ -174,7 +205,7 @@ class App extends React.Component {
     }
 
     startGame() {
-        var intervalId = setInterval(() => this.move(), 1000);
+        var intervalId = setInterval(() => this.move(), 400);
         // store intervalId in the state so it can be accessed later:
         this.setState({ intervalId: intervalId });
     }
