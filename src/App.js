@@ -45,15 +45,14 @@ class App extends React.Component {
             speed: 100,
             columnPos: 7,
             rowPos: 7,
-            snake: [[7, 7], [8, 8]],
-            size: 100
+            snake: [[7, 7]],
+            size: 1
         };
     }
 
     componentDidMount() {
         // toggle starting position
         this.toggle(this.state.columnPos, this.state.rowPos);
-
         document.addEventListener("keydown", this.handleKeyPress);
     }
 
@@ -125,22 +124,21 @@ class App extends React.Component {
         );
     }
 
-    test(copy) {
-        for (let i = 0; i < copy.length; i++) {
-            if (copy[i] === [[7, 7]]) {
-                alert("lost");
-            }
-        }
-    }
-
     drawSnake() {
         let copy = this.arrayClone(this.state.snake);
 
-        if (this.state.snake.length === this.state.size) {
-            this.toggle(copy[0][0], copy[0][1], false);
-            copy.shift();
-        }
+        this.snakeTail(copy);
 
+        this.loseCheck(copy);
+
+        this.snakeHead(copy);
+
+        this.setState({
+            snake: copy
+        });
+    }
+
+    loseCheck(copy) {
         for (let i = 0; i < copy.length; i++) {
             if (
                 copy[i][0] === this.state.columnPos &&
@@ -149,12 +147,21 @@ class App extends React.Component {
                 return alert("lost");
             }
         }
+    }
 
+    snakeTail(copy) {
+        if (this.state.snake.length === this.state.size) {
+            this.toggle(copy[0][0], copy[0][1], false);
+            copy.shift();
+        }
+        return copy;
+    }
+
+    snakeHead(copy) {
         copy.push([this.state.columnPos, this.state.rowPos]);
-        copy.forEach(x => this.toggle(x[0], x[1]));
-        this.setState({
-            snake: copy
-        });
+        // copy.forEach(x => this.toggle(x[0], x[1]));
+        this.toggle(copy[copy.length - 1][0], copy[copy.length - 1][1]);
+        return copy;
     }
 
     toggle(column, row, status = true) {
