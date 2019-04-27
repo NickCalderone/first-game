@@ -2,68 +2,202 @@ import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
 
+function BuildBoard(props) {
+    let rowsArray = [];
+    let squareClass = "";
+
+    for (let i = 0; i < 20; i++) {
+        for (let j = 0; j < 30; j++) {
+            let squareId = i + "_" + j;
+            squareClass = props.board[i][j] ? "box red" : "box blue";
+
+            rowsArray.push(
+                <Square
+                    squareClass={squareClass}
+                    key={squareId}
+                    squareId={squareId}
+                    row={i}
+                    column={j}
+                    toggle={props.toggle}
+                />
+            );
+        }
+    }
+
+    return <div className="grid">{rowsArray}</div>;
+}
+
 class App extends React.Component {
     constructor(props) {
         super();
 
+        this.toggle = this.toggle.bind(this);
+        this.arrayClone = this.arrayClone.bind(this);
+        this.handleKeyPress = this.handleKeyPress.bind(this);
+
         this.state = {
-            board: Array(this.rows)
+            intervalId: "",
+            currentDirection: "",
+            board: Array(20)
                 .fill()
-                .map(() => Array(this.columns).fill(false)),
+                .map(() => Array(30).fill(false)),
             speed: 100,
-            rows: 30,
-            columns: 50
+            columnPos: 10,
+            rowPos: 15,
+            snake: [[0, 0], [1, 1]],
+            size: 1
         };
     }
 
-    buildBoard() {
-        const width = this.props.columns * 19;
-        let rowsArray = [];
-        let squareClass = "";
+    componentDidMount() {
+        this.toggle(this.state.columnPos, this.state.rowPos);
 
-        for (let i = 0; i < this.state.rows; i++) {
-            for (let j = 0; j < this.state.columns; j++) {
-                let squareId = i + "_" + j;
-                squareClass = this.props.board[i][j] ? "red" : "blue";
-
-                rowsArray.push(
-                    <Square
-                        squareClass={squareClass}
-                        key={squareId}
-                        squareId={squareId}
-                        row={i}
-                        column={j}
-                        toggle={this.props.toggle}
-                    />
-                );
-            }
-        }
-
-        return(
-            <div className="grid" style={{width: width}}>
-                {rowsArray[]}
-            </div>
-        )
+        document.addEventListener("keydown", this.handleKeyPress);
     }
 
-    Square() {
-        return <div class="box" />;
+    move() {
+        switch (this.state.currentDirection) {
+            case 38: //up
+                this.setState(
+                    previousState => {
+                        return {
+                            columnPos: previousState.columnPos - 1
+                        };
+                    },
+                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                );
+                break;
+            case 39: //right
+                this.setState(
+                    previousState => {
+                        return {
+                            rowPos: previousState.rowPos + 1
+                        };
+                    },
+                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                );
+                break;
+            case 40: //down
+                this.setState(
+                    previousState => {
+                        return {
+                            columnPos: previousState.columnPos + 1
+                        };
+                    },
+                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                );
+                break;
+            case 37: //left
+                this.setState(
+                    previousState => {
+                        return {
+                            rowPos: previousState.rowPos - 1
+                        };
+                    },
+                    () => this.toggle(this.state.columnPos, this.state.rowPos)
+                );
+                break;
+            default:
+                break;
+        }
+    }
+
+    handleKeyPress(e) {
+        e.preventDefault();
+        this.setState({
+            currentDirection: e.keyCode
+        });
+        // switch (e.keyCode) {
+        //     case 38: //up
+        //         console.log("up");
+
+        //         e.preventDefault();
+
+        //         this.setState(
+        //             previousState => {
+        //                 return {
+        //                     columnPos: previousState.columnPos - 1,
+        //                     currentDirection: e.keycode
+        //                 };
+        //             },
+        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
+        //         );
+        //         break;
+        //     case 39: //right
+        //         console.log("right");
+        //         e.preventDefault();
+        //         this.setState(
+        //             previousState => {
+        //                 return {
+        //                     rowPos: previousState.rowPos + 1
+        //                 };
+        //             },
+        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
+        //         );
+        //         break;
+        //     case 40: //down
+        //         console.log("down");
+        //         e.preventDefault();
+        //         this.setState(
+        //             previousState => {
+        //                 return {
+        //                     columnPos: previousState.columnPos + 1
+        //                 };
+        //             },
+        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
+        //         );
+        //         break;
+        //     case 37: //left
+        //         console.log("left");
+        //         e.preventDefault();
+        //         this.setState(
+        //             previousState => {
+        //                 return {
+        //                     rowPos: previousState.rowPos - 1
+        //                 };
+        //             },
+        //             () => this.toggle(this.state.columnPos, this.state.rowPos)
+        //         );
+        //         break;
+        //     default:
+        //         break;
+        // }
+    }
+
+    drawSnake() {
+        this.state.snake.forEach(x => this.toggle(x[0], x[1]));
+    }
+
+    toggle(column, row, status = true) {
+        let newArray = this.arrayClone(this.state.board);
+        newArray[column][row] = status;
+
+        this.setState({
+            board: newArray
+        });
+    }
+
+    startGame() {
+        var intervalId = setInterval(() => this.move(), 400);
+        // store intervalId in the state so it can be accessed later:
+        this.setState({ intervalId: intervalId });
+    }
+
+    arrayClone(array) {
+        return JSON.parse(JSON.stringify(array));
     }
 
     render() {
         return (
-            <div class="view">
-                <div className="row">
-                    {this.square()}
-                    {this.square()}
-                </div>
-                <div style={{ padding: "0px", margin: "0px", display: "flex" }}>
-                    {this.square()}
-                    {this.square()}
-                </div>
+            <div className="view">
+                <BuildBoard board={this.state.board} />
             </div>
         );
     }
+}
+
+function Square(props) {
+    return <div className={props.squareClass} />;
 }
 
 export default App;

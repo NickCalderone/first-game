@@ -2,17 +2,16 @@
     padding: 20px;
 }
 
-.row {
-    padding: 0px;
-    margin: 0px;
-    display: flex;
+.grid {
+    width: 510px;
+    font-size: 0px;
 }
 
 .box {
     display: inline-block;
     border: 2px solid grey;
-    width: 25px;
-    height: 25px;
+    width: 15px;
+    height: 15px;
     margin-left: -2px;
     margin-bottom: -2px;
 }
