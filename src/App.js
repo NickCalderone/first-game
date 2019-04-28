@@ -31,13 +31,18 @@ class App extends React.Component {
     constructor(props) {
         super();
 
+        this.checkMove = this.checkMove.bind(this);
         this.toggle = this.toggle.bind(this);
         this.arrayClone = this.arrayClone.bind(this);
-        this.handleKeyPress = this.handleKeyPress.bind(this);
+        this.prevDefault = this.prevDefault.bind(this);
+        this.startGame = this.startGame.bind(this);
+        this.updateDirection = this.updateDirection.bind(this);
 
         this.state = {
             intervalId: "",
+            nextDirection: "",
             currentDirection: "",
+            previousDirection: "",
             foodPos: [],
             gameStarted: false,
             board: Array(15)
@@ -71,46 +76,66 @@ class App extends React.Component {
         // toggle starting position
         this.toggle(this.state.columnPos, this.state.rowPos);
         this.dropFood();
-        document.addEventListener("keydown", this.handleKeyPress);
+        document.addEventListener("keydown", this.prevDefault);
+        document.addEventListener("keydown", this.updateDirection);
+        document.addEventListener("keydown", this.startGame);
+    }
+
+    checkMove(next) {
+        if (
+            next === this.state.currentDirection + 2 ||
+            next === this.state.currentDirection - 2
+        ) {
+            return this.state.currentDirection;
+        } else return next;
     }
 
     move() {
-        switch (this.state.currentDirection) {
+        let x = this.checkMove(this.state.nextDirection);
+        switch (x) {
             case 38: //up
+                let a = this.state.columnPos === 0 ? -14 : 1;
                 this.setState(
                     previousState => {
                         return {
-                            columnPos: previousState.columnPos - 1
+                            columnPos: previousState.columnPos - a,
+                            currentDirection: x
                         };
                     },
                     () => this.drawSnake()
                 );
                 break;
             case 39: //right
+                let b = this.state.rowPos === 14 ? -14 : 1;
                 this.setState(
                     previousState => {
                         return {
-                            rowPos: previousState.rowPos + 1
+                            rowPos: previousState.rowPos + b,
+                            currentDirection: x
                         };
                     },
                     () => this.drawSnake()
                 );
                 break;
             case 40: //down
+                let c = this.state.columnPos === 14 ? -14 : 1;
                 this.setState(
                     previousState => {
                         return {
-                            columnPos: previousState.columnPos + 1
+                            columnPos: previousState.columnPos + c,
+                            currentDirection: x
                         };
                     },
                     () => this.drawSnake()
                 );
                 break;
             case 37: //left
+                let d = this.state.rowPos === 0 ? -14 : 1;
                 this.setState(
                     previousState => {
                         return {
-                            rowPos: previousState.rowPos - 1
+                            rowPos: previousState.rowPos - d,
+                            currentDirection: x
                         };
                     },
                     () => this.drawSnake()
@@ -121,25 +146,60 @@ class App extends React.Component {
         }
     }
 
-    handleKeyPress(e) {
-        if (e.keyCode === 37 || 38 || 39 || 40) {
+    prevDefault(e) {
+        if (
+            e.keyCode === 37 ||
+            e.keyCode === 38 ||
+            e.keyCode === 39 ||
+            e.keyCode === 40
+        ) {
             e.preventDefault();
+        } else {
+            return false;
         }
+    }
 
-        this.setState(
-            {
-                currentDirection: e.keyCode
-            },
-            () => {
-                if (this.state.gameStarted === false) {
-                    this.startGame();
-
-                    this.setState({
-                        gameStarted: true
-                    });
-                }
+    prev180(e) {
+        // prevent 180 degree turns
+        if (this.state.size > 1) {
+            switch (e.keyCode) {
+                case 38: //up
+                    if (this.state.nextDirection === 40) {
+                        return;
+                    }
+                    break;
+                case 39: //right
+                    if (this.state.nextDirection === 37) {
+                        return;
+                    }
+                    break;
+                case 40: //down
+                    if (this.state.nextDirection === 38) {
+                        return;
+                    }
+                    break;
+                case 37: //left
+                    if (this.state.nextDirection === 39) {
+                        return;
+                    }
+                    break;
+                default:
+                    break;
             }
-        );
+        }
+    }
+
+    updateDirection(e) {
+        console.log(e.keyCode);
+        if (
+            // this.state.size > 1 &&
+            e.keyCode === 37 ||
+            e.keyCode === 38 ||
+            e.keyCode === 39 ||
+            e.keyCode === 40
+        ) {
+            this.setState({ nextDirection: e.keyCode });
+        }
     }
 
     drawSnake() {
@@ -155,12 +215,23 @@ class App extends React.Component {
         });
     }
 
+    test(arg) {
+        if (arg === "yes") {
+            return;
+        } else {
+            this.setState({
+                size: 10
+            });
+        }
+    }
+
     foodCheck(copy) {
         if (
             copy[copy.length - 1][0] === this.state.foodPos[0] &&
             copy[copy.length - 1][1] === this.state.foodPos[1]
         ) {
             this.dropFood();
+            copy.size = copy.size + 1;
             this.setState(previousState => {
                 return {
                     size: previousState.size + 1
@@ -204,10 +275,19 @@ class App extends React.Component {
         });
     }
 
-    startGame() {
-        var intervalId = setInterval(() => this.move(), 400);
-        // store intervalId in the state so it can be accessed later:
-        this.setState({ intervalId: intervalId });
+    startGame(e) {
+        if (this.state.gameStarted === false) {
+            let intervalId = setInterval(() => this.move(), 200);
+            // store intervalId in the state so it can be accessed later:
+
+            this.setState(previousState => {
+                return {
+                    gameStarted: true,
+                    nextDirection: e.keyCode,
+                    intervalId: intervalId
+                };
+            });
+        }
     }
 
     arrayClone(array) {
@@ -219,8 +299,11 @@ class App extends React.Component {
 
     render() {
         return (
-            <div className="view">
-                <BuildBoard board={this.state.board} />
+            <div>
+                <h3>Snake Size: {this.state.size}</h3>
+                <div className="view">
+                    <BuildBoard board={this.state.board} />
+                </div>
             </div>
         );
     }
