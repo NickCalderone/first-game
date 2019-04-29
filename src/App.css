@@ -1,17 +1,25 @@
+.score {
+    text-align: center;
+    padding: 30px;
+}
+
 .view {
     padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .grid {
-    width: 255px;
+    width: 405px;
     font-size: 0px;
 }
 
 .box {
     display: inline-block;
     border: 2px solid grey;
-    width: 15px;
-    height: 15px;
+    width: 25px;
+    height: 25px;
     margin-left: -2px;
     margin-bottom: -2px;
 }
@@ -22,4 +30,8 @@
 
 .blue {
     background-color: blue;
+}
+
+.green {
+    background-color: green;
 }
