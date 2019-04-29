@@ -37,6 +37,7 @@ class App extends React.Component {
         this.prevDefault = this.prevDefault.bind(this);
         this.startGame = this.startGame.bind(this);
         this.updateDirection = this.updateDirection.bind(this);
+        this.dropFood = this.dropFood.bind(this);
 
         this.state = {
             intervalId: "",
@@ -60,9 +61,16 @@ class App extends React.Component {
         return Math.floor(Math.random() * Math.floor(max));
     }
 
-    dropFood() {
+    // set copy to empty array to allow it to be called on componentDidMount
+    dropFood(copy = []) {
         let col = this.getRandomInt(15);
         let row = this.getRandomInt(15);
+
+        for (let i = 0; i < copy.length; i++) {
+            if (copy[i][0] === col && copy[i][1] === row) {
+                return this.dropFood(copy);
+            }
+        }
 
         this.setState(
             {
@@ -190,7 +198,6 @@ class App extends React.Component {
     }
 
     updateDirection(e) {
-        console.log(e.keyCode);
         if (
             // this.state.size > 1 &&
             e.keyCode === 37 ||
@@ -207,8 +214,8 @@ class App extends React.Component {
 
         this.loseCheck(copy);
         this.snakeHead(copy);
-        this.foodCheck(copy);
         this.snakeTail(copy);
+        this.foodCheck(copy);
 
         this.setState({
             snake: copy
@@ -230,7 +237,7 @@ class App extends React.Component {
             copy[copy.length - 1][0] === this.state.foodPos[0] &&
             copy[copy.length - 1][1] === this.state.foodPos[1]
         ) {
-            this.dropFood();
+            this.dropFood(copy);
             copy.size = copy.size + 1;
             this.setState(previousState => {
                 return {
