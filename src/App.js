@@ -283,16 +283,6 @@ class App extends React.Component {
         }
     }
 
-    test(arg) {
-        if (arg === "yes") {
-            return;
-        } else {
-            this.setState({
-                size: 10
-            });
-        }
-    }
-
     toggle(column, row, status = true) {
         let newArray = this.arrayClone(this.state.board);
         newArray[column][row] = status;

@@ -1,3 +1,7 @@
+body {
+    background-color: rgb(71, 83, 255);
+}
+
 .score {
     text-align: center;
     padding: 30px;
@@ -11,27 +15,27 @@
 }
 
 .grid {
-    width: 405px;
+    width: 450px;
     font-size: 0px;
 }
 
 .box {
     display: inline-block;
-    border: 2px solid grey;
-    width: 25px;
-    height: 25px;
-    margin-left: -2px;
-    margin-bottom: -2px;
+    /* border: 2px solid grey; */
+    width: 30px;
+    height: 30px;
+    /* margin-left: -2px;
+    margin-bottom: -2px; */
 }
 
 .red {
-    background-color: red;
+    background-color: rgb(235, 72, 32);
 }
 
 .blue {
-    background-color: blue;
+    background-color: aquamarine;
 }
 
 .green {
-    background-color: green;
+    background-color: rgb(80, 156, 80);
 }
