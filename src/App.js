@@ -9,12 +9,7 @@ function BuildBoard(props) {
     for (let i = 0; i < 15; i++) {
         for (let j = 0; j < 15; j++) {
             let squareId = i + "_" + j;
-            squareClass =
-                props.board[i][j] === 1
-                    ? "box green"
-                    : props.board[i][j]
-                    ? "box red"
-                    : "box blue";
+            squareClass = "box " + props.board[i][j];
 
             rowsArray.push(
                 <Square
@@ -44,6 +39,12 @@ class App extends React.Component {
         this.updateDirection = this.updateDirection.bind(this);
         this.dropFood = this.dropFood.bind(this);
         this.resetGame = this.resetGame.bind(this);
+        this.updateBoard = this.updateBoard.bind(this);
+        this.setup = this.setup.bind(this);
+
+        this.boardTemplate = Array(15)
+            .fill()
+            .map(() => Array(15).fill("blue"));
 
         this.state = {
             intervalId: "",
@@ -54,7 +55,7 @@ class App extends React.Component {
             gameStarted: false,
             board: Array(15)
                 .fill()
-                .map(() => Array(15).fill(false)),
+                .map(() => Array(15).fill("blue")),
             speed: 100,
             columnPos: 7,
             rowPos: 7,
@@ -80,35 +81,50 @@ class App extends React.Component {
     }
 
     componentDidMount() {
-        // toggle starting position
-        this.toggle(this.state.columnPos, this.state.rowPos);
         this.dropFood();
         document.addEventListener("keydown", this.prevDefault);
         document.addEventListener("keydown", this.updateDirection);
         document.addEventListener("keydown", this.startGame);
     }
 
-    drawSnake() {
-        let copy = this.arrayClone(this.state.snake);
+    gameSetup() {
+        let boardCopy = Array(15)
+            .fill()
+            .map(() => Array(15).fill("blue"));
 
-        this.loseCheck(copy);
-        this.snakeHead(copy);
-        this.snakeTail(copy);
-        this.foodCheck(copy);
-
+        boardCopy[7][7] = "red";
+        boardCopy[this.state.foodPos[0]][this.state.foodPos[1]] = "green";
         this.setState({
-            snake: copy
+            board: boardCopy,
+            gameStarted: false
         });
     }
 
-    // set copy to empty array to allow it to be called on componentDidMount
-    dropFood(copy = []) {
+    drawSnake() {
+        let snakeCopy = this.arrayClone(this.state.snake);
+        let boardCopy = Array(15)
+            .fill()
+            .map(() => Array(15).fill("blue"));
+
+        this.loseCheck(snakeCopy);
+        this.snakeHead(snakeCopy);
+        this.foodCheck(snakeCopy);
+        this.updateBoard(boardCopy, snakeCopy);
+
+        this.setState({
+            snake: snakeCopy,
+            board: this.updateBoard(boardCopy, snakeCopy)
+        });
+    }
+
+    // set snakeCopy to empty array to allow it to be called on componentDidMount
+    dropFood(snakeCopy = []) {
         let col = this.getRandomInt(15);
         let row = this.getRandomInt(15);
 
-        for (let i = 0; i < copy.length; i++) {
-            if (copy[i][0] === col && copy[i][1] === row) {
-                return this.dropFood(copy);
+        for (let i = 0; i < snakeCopy.length; i++) {
+            if (snakeCopy[i][0] === col && snakeCopy[i][1] === row) {
+                return this.dropFood(snakeCopy);
             }
         }
 
@@ -116,17 +132,16 @@ class App extends React.Component {
             {
                 foodPos: [col, row]
             },
-            this.toggle(col, row, 1)
+            () => this.setup()
         );
     }
 
-    foodCheck(copy) {
+    foodCheck(snakeCopy) {
         if (
-            copy[copy.length - 1][0] === this.state.foodPos[0] &&
-            copy[copy.length - 1][1] === this.state.foodPos[1]
+            snakeCopy[snakeCopy.length - 1][0] === this.state.foodPos[0] &&
+            snakeCopy[snakeCopy.length - 1][1] === this.state.foodPos[1]
         ) {
-            this.dropFood(copy);
-            copy.size = copy.size + 1;
+            this.dropFood(snakeCopy);
             this.setState(previousState => {
                 return {
                     size: previousState.size + 1
@@ -139,17 +154,25 @@ class App extends React.Component {
         return Math.floor(Math.random() * Math.floor(max));
     }
 
-    loseCheck(copy) {
-        for (let i = 0; i < copy.length; i++) {
+    loseCheck(snakeCopy) {
+        for (let i = 0; i < snakeCopy.length; i++) {
             if (
-                copy[i][0] === this.state.columnPos &&
-                copy[i][1] === this.state.rowPos
+                snakeCopy[i][0] === this.state.columnPos &&
+                snakeCopy[i][1] === this.state.rowPos
             ) {
                 this.setState(
                     {
                         gameStarted: false
                     },
-                    () => this.resetGame()
+                    () => {
+                        alert(
+                            "You Made It Through " +
+                                (this.state.size - 1) +
+                                " Rounds!"
+                        );
+
+                        this.resetGame();
+                    }
                 );
             }
         }
@@ -227,7 +250,6 @@ class App extends React.Component {
     resetGame() {
         if (this.state.gameStarted === false) {
             clearInterval(this.state.intervalId);
-            alert("You Made It Through " + (this.state.size - 1) + " Rounds!");
             this.setState(
                 {
                     intervalId: "",
@@ -236,9 +258,9 @@ class App extends React.Component {
                     previousDirection: "",
                     foodPos: [],
                     gameStarted: false,
-                    board: new Array(15)
+                    board: Array(15)
                         .fill()
-                        .map(() => Array(15).fill(false)),
+                        .map(() => Array(15).fill("blue")),
                     speed: 100,
                     columnPos: 7,
                     rowPos: 7,
@@ -246,26 +268,33 @@ class App extends React.Component {
                     size: 1
                 },
                 () => {
-                    this.toggle(this.state.columnPos, this.state.rowPos);
                     this.dropFood();
                 }
             );
         }
     }
 
-    snakeHead(copy) {
-        copy.push([this.state.columnPos, this.state.rowPos]);
-        // copy.forEach(x => this.toggle(x[0], x[1]));
-        this.toggle(copy[copy.length - 1][0], copy[copy.length - 1][1]);
-        return copy;
+    setup() {
+        if (this.state.gameStarted === false) {
+            let boardCopy = Array(15)
+                .fill()
+                .map(() => Array(15).fill("blue"));
+
+            boardCopy[7][7] = "red";
+            boardCopy[this.state.foodPos[0]][this.state.foodPos[1]] = "green";
+
+            this.setState({ board: boardCopy });
+        }
     }
 
-    snakeTail(copy) {
+    snakeHead(snakeCopy) {
+        snakeCopy.push([this.state.columnPos, this.state.rowPos]);
         if (this.state.snake.length === this.state.size) {
-            this.toggle(copy[0][0], copy[0][1], false);
-            copy.shift();
+            snakeCopy.shift();
         }
-        return copy;
+
+        // snakeCopy.forEach(x => this.toggle(x[0], x[1]));
+        return snakeCopy;
     }
 
     startGame(e) {
@@ -290,6 +319,25 @@ class App extends React.Component {
         this.setState({
             board: newArray
         });
+    }
+
+    updateBoard(boardCopy, snakeCopy) {
+        for (let i = 0; i < snakeCopy.length; i++) {
+            boardCopy[snakeCopy[i][0]][snakeCopy[i][1]] = "red";
+        }
+
+        // snakeCopy.forEach(x => {
+        //     boardCopy[x[0]][x[1]] = "red";
+        // });
+
+        // not sure why or operator works here, seems like it should be the and operator
+        if (
+            this.state.foodPos[0] !== this.state.columnPos ||
+            this.state.foodPos[1] !== this.state.rowPos
+        ) {
+            boardCopy[this.state.foodPos[0]][this.state.foodPos[1]] = "green";
+        }
+        return boardCopy;
     }
 
     updateDirection(e) {
